@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Zone = "red" | "yellow" | "green" | "gray";
 
@@ -278,8 +278,9 @@ export default function FSFAssessmentWireframe() {
       (z): z is Exclude<Zone, "gray"> => z !== "gray",
     );
     const zonePoints = scoredZones.map((z) => (z === "green" ? 2 : z === "yellow" ? 1 : 0));
-    const performanceAverage = zonePoints.length ? zonePoints.reduce((a, b) => a + b, 0) / zonePoints.length : 0;
-
+    const performanceAverage = zonePoints.length
+          ? zonePoints.reduce<number>((a, b) => a + b, 0) / zonePoints.length
+          : 0;
     let overallZone: Zone = "gray";
     if (performanceAverage >= 1.5 && movementPct >= 70) overallZone = "green";
     else if (performanceAverage >= 0.75 || movementPct >= 45) overallZone = "yellow";
