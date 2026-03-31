@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-
+import { supabase } from "./supabase";
 type Zone = "red" | "yellow" | "green" | "gray";
 
 type FormState = {
@@ -214,10 +214,80 @@ export default function FSFAssessmentWireframe() {
   const small = "text-xs text-slate-500";
 
   const [form, setForm] = useState<FormState>(initialForm);
-
+  const [saveStatus, setSaveStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const setField = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+    const handleSaveAssessment = async () => {
+        try {
+            setIsSaving(true);
+            setSaveStatus("");
+
+            const payload = {
+                client_name: form.clientName,
+                assessment_date: form.date,
+                coach: form.coach,
+                age: form.age ? Number(form.age) : null,
+                sex: form.sex,
+                goal: form.goal,
+                complaint: form.complaint,
+
+                trx_squat: form.trxSquat ? Number(form.trxSquat) : null,
+                hip_hinge: form.hipHinge ? Number(form.hipHinge) : null,
+                trx_row: form.trxRow ? Number(form.trxRow) : null,
+                overhead_reach: form.overheadReach ? Number(form.overheadReach) : null,
+                ankle_left: form.ankleLeft ? Number(form.ankleLeft) : null,
+                ankle_right: form.ankleRight ? Number(form.ankleRight) : null,
+                aslr_left: form.aslrLeft ? Number(form.aslrLeft) : null,
+                aslr_right: form.aslrRight ? Number(form.aslrRight) : null,
+                floor_access: form.floorAccess,
+                plank_movement: form.plankMovement ? Number(form.plankMovement) : null,
+
+                plank_time: form.plankTime ? Number(form.plankTime) : null,
+                farmer_carry: form.farmerCarry ? Number(form.farmerCarry) : null,
+                farmer_notes: form.farmerNotes,
+                sit_to_stand: form.sitToStand ? Number(form.sitToStand) : null,
+                sit_to_stand_status: form.sitToStandStatus,
+                grip_left: form.gripLeft ? Number(form.gripLeft) : null,
+                grip_right: form.gripRight ? Number(form.gripRight) : null,
+                balance_left: form.balanceLeft ? Number(form.balanceLeft) : null,
+                balance_right: form.balanceRight ? Number(form.balanceRight) : null,
+
+                top_limiting_factors: form.topLimitingFactors,
+                recommended_path: form.recommendedPath || results.autoPath,
+                coach_notes: form.coachNotes,
+
+                movement_total: results.movementTotal,
+                movement_max: results.movementMax,
+                movement_pct: results.movementPct,
+                best_grip: results.bestGrip,
+                best_balance: results.bestBalance,
+                fsf_functional_strength_score: results.fsfFunctionalStrengthScore,
+                fsf_score_zone: results.fsfScoreZone,
+                fsf_score_label: results.fsfScoreLabel,
+                fsf_score_interpretation: results.fsfScoreInterpretation,
+                summary_text: results.summaryText,
+                recommendation_text: results.recommendationText,
+                functional_age: results.functionalAge,
+            };
+
+            const { error } = await supabase.from("assessments").insert(payload);
+
+            if (error) {
+                console.error(error);
+                setSaveStatus("Could not save assessment.");
+                return;
+            }
+
+            setSaveStatus("Assessment saved.");
+        } catch (err) {
+            console.error(err);
+            setSaveStatus("Could not save assessment.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
   const results = useMemo(() => {
     const num = (v: string) => {
@@ -1045,9 +1115,16 @@ export default function FSFAssessmentWireframe() {
                 <button className="rounded-2xl bg-red-700 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-red-800">
                   Generate Assessment Report
                 </button>
-                <button className="rounded-2xl border bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                  Save Draft
-                </button>
+                <button
+                  className="rounded-2xl border bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  onClick={handleSaveAssessment}
+                  disabled={isSaving}
+                 >
+                 {isSaving ? "Saving..." : "Save Assessment"}
+                              </button>
+                              {saveStatus && (
+                                  <p className="mt-3 text-sm text-slate-600">{saveStatus}</p>
+                              )}
                 <button
                   className="rounded-2xl border bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
                   onClick={() => setForm(initialForm)}
