@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabase";
 type Zone = "red" | "yellow" | "green" | "gray";
 
@@ -31,24 +31,77 @@ type FormState = {
   balanceRight: string;
   topLimitingFactors: string;
   recommendedPath: string;
+  recommendedFrequency: string;
+  recommendedPrice: string;
   coachNotes: string;
 };
-
 type MetricCard = {
-  title: string;
-  value: string;
-  target: string;
-  zone: Zone;
-  why: string;
-  numericValue: number | null;
-  maxValue: number;
+    title: string;
+    value: string;
+    target: string;
+    zone: Zone;
+    why: string;
+    numericValue: number | null;
+    maxValue: number;
+};
+
+type AssessmentRow = {
+    id: string;
+    created_at: string | null;
+    client_name: string | null;
+    assessment_date: string | null;
+    coach: string | null;
+    age: number | null;
+    sex: string | null;
+    goal: string | null;
+    complaint: string | null;
+
+    trx_squat: number | null;
+    hip_hinge: number | null;
+    trx_row: number | null;
+    overhead_reach: number | null;
+    ankle_left: number | null;
+    ankle_right: number | null;
+    aslr_left: number | null;
+    aslr_right: number | null;
+    floor_access: string | null;
+    plank_movement: number | null;
+
+    plank_time: number | null;
+    farmer_carry: number | null;
+    farmer_notes: string | null;
+    sit_to_stand: number | null;
+    sit_to_stand_status: string | null;
+    grip_left: number | null;
+    grip_right: number | null;
+    balance_left: number | null;
+    balance_right: number | null;
+
+    top_limiting_factors: string | null;
+    recommended_path: string | null;
+    recommended_frequency: string | null;
+    recommended_price: string | null;
+    coach_notes: string | null;
+
+    movement_total: number | null;
+    movement_max: number | null;
+    movement_pct: number | null;
+    best_grip: number | null;
+    best_balance: number | null;
+    fsf_functional_strength_score: number | null;
+    fsf_score_zone: string | null;
+    fsf_score_label: string | null;
+    fsf_score_interpretation: string | null;
+    summary_text: string | null;
+    recommendation_text: string | null;
+    functional_age: number | null;
 };
 
 const movementOptions = [
-  { value: "", label: "Select score" },
-  { value: "2", label: "2 - Clean" },
-  { value: "1", label: "1 - Compensation" },
-  { value: "0", label: "0 - Pain / Unable" },
+    { value: "", label: "Select score" },
+    { value: "2", label: "2 - Clean" },
+    { value: "1", label: "1 - Compensation" },
+    { value: "0", label: "0 - Pain / Unable" },
 ];
 
 const floorOptions = [
@@ -94,6 +147,8 @@ const initialForm: FormState = {
   balanceLeft: "",
   balanceRight: "",
   topLimitingFactors: "Lower body strength, balance, and grip weakness",
+  recommendedFrequency: "",
+  recommendedPrice: "",
   recommendedPath: "",
   coachNotes:
     "Focus on lower body strength, floor confidence, balance, and core stability over the next 8–12 weeks.",
@@ -216,9 +271,190 @@ export default function FSFAssessmentWireframe() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [saveStatus, setSaveStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [view, setView] = useState<"form" | "saved">("form");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [savedAssessments, setSavedAssessments] = useState<AssessmentRow[]>([]);
+  const [isLoadingAssessments, setIsLoadingAssessments] = useState(false);
+  const [assessmentLoadError, setAssessmentLoadError] = useState("");
   const setField = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+    const loadAssessments = async (term = "") => {
+        try {
+            setIsLoadingAssessments(true);
+            setAssessmentLoadError("");
+
+            let query = supabase
+                .from("assessments")
+                .select(`
+        id,
+        created_at,
+        client_name,
+        assessment_date,
+        coach,
+        age,
+        sex,
+        goal,
+        complaint,
+        trx_squat,
+        hip_hinge,
+        trx_row,
+        overhead_reach,
+        ankle_left,
+        ankle_right,
+        aslr_left,
+        aslr_right,
+        floor_access,
+        plank_movement,
+        plank_time,
+        farmer_carry,
+        farmer_notes,
+        sit_to_stand,
+        sit_to_stand_status,
+        grip_left,
+        grip_right,
+        balance_left,
+        balance_right,
+        top_limiting_factors,
+        recommended_path,
+        coach_notes,
+        recommended_frequency,
+        recommended_price,
+        movement_total,
+        movement_max,
+        movement_pct,
+        best_grip,
+        best_balance,
+        fsf_functional_strength_score,
+        fsf_score_zone,
+        fsf_score_label,
+        fsf_score_interpretation,
+        summary_text,
+        recommendation_text,
+        functional_age
+      `)
+                .order("created_at", { ascending: false });
+
+            if (term.trim()) {
+                query = query.ilike("client_name", `%${term.trim()}%`);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error(error);
+                setAssessmentLoadError("Could not load saved assessments.");
+                return;
+            }
+
+            setSavedAssessments((data ?? []) as AssessmentRow[]);
+        } catch (err) {
+            console.error(err);
+            setAssessmentLoadError("Could not load saved assessments.");
+        } finally {
+            setIsLoadingAssessments(false);
+        }
+    };
+
+    const mapRowToForm = (row: AssessmentRow): FormState => {
+        return {
+            clientName: row.client_name ?? "",
+            date: row.assessment_date ?? "",
+            coach: row.coach ?? "",
+            age: row.age !== null && row.age !== undefined ? String(row.age) : "",
+            sex: row.sex ?? "",
+            goal: row.goal ?? "",
+            complaint: row.complaint ?? "",
+
+            trxSquat: row.trx_squat !== null && row.trx_squat !== undefined ? String(row.trx_squat) : "",
+            hipHinge: row.hip_hinge !== null && row.hip_hinge !== undefined ? String(row.hip_hinge) : "",
+            trxRow: row.trx_row !== null && row.trx_row !== undefined ? String(row.trx_row) : "",
+            overheadReach:
+                row.overhead_reach !== null && row.overhead_reach !== undefined
+                    ? String(row.overhead_reach)
+                    : "",
+            ankleLeft:
+                row.ankle_left !== null && row.ankle_left !== undefined
+                    ? String(row.ankle_left)
+                    : "",
+            ankleRight:
+                row.ankle_right !== null && row.ankle_right !== undefined
+                    ? String(row.ankle_right)
+                    : "",
+            aslrLeft:
+                row.aslr_left !== null && row.aslr_left !== undefined
+                    ? String(row.aslr_left)
+                    : "",
+            aslrRight:
+                row.aslr_right !== null && row.aslr_right !== undefined
+                    ? String(row.aslr_right)
+                    : "",
+            floorAccess: row.floor_access ?? "",
+            plankMovement:
+                row.plank_movement !== null && row.plank_movement !== undefined
+                    ? String(row.plank_movement)
+                    : "",
+
+            plankTime:
+                row.plank_time !== null && row.plank_time !== undefined
+                    ? String(row.plank_time)
+                    : "",
+            farmerCarry:
+                row.farmer_carry !== null && row.farmer_carry !== undefined
+                    ? String(row.farmer_carry)
+                    : "",
+            farmerNotes: row.farmer_notes ?? "",
+            sitToStand:
+                row.sit_to_stand !== null && row.sit_to_stand !== undefined
+                    ? String(row.sit_to_stand)
+                    : "",
+            sitToStandStatus: row.sit_to_stand_status ?? "",
+            gripLeft:
+                row.grip_left !== null && row.grip_left !== undefined
+                    ? String(row.grip_left)
+                    : "",
+            gripRight:
+                row.grip_right !== null && row.grip_right !== undefined
+                    ? String(row.grip_right)
+                    : "",
+            balanceLeft:
+                row.balance_left !== null && row.balance_left !== undefined
+                    ? String(row.balance_left)
+                    : "",
+            balanceRight:
+                row.balance_right !== null && row.balance_right !== undefined
+                    ? String(row.balance_right)
+                    : "",
+
+            topLimitingFactors: row.top_limiting_factors ?? "",
+            recommendedPath: row.recommended_path ?? "",
+            recommendedFrequency: row.recommended_frequency ?? "",
+            recommendedPrice: row.recommended_price ?? "",
+            coachNotes: row.coach_notes ?? "",
+        };
+    };
+
+    const handleLoadAssessment = (row: AssessmentRow) => {
+        setForm(mapRowToForm(row));
+        setSaveStatus("");
+        setView("form");
+    };
+
+    useEffect(() => {
+        if (view === "saved") {
+            loadAssessments(searchTerm);
+        }
+    }, [view, searchTerm]);
+    const formatListDate = (value: string | null) => {
+        if (!value) return "No date";
+
+        const parsed = new Date(value);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed.toLocaleDateString();
+        }
+
+        return value;
+    };
     const handleSaveAssessment = async () => {
         try {
             setIsSaving(true);
@@ -256,6 +492,8 @@ export default function FSFAssessmentWireframe() {
 
                 top_limiting_factors: form.topLimitingFactors,
                 recommended_path: form.recommendedPath || results.autoPath,
+                recommended_frequency: form.recommendedFrequency,
+                recommended_price: form.recommendedPrice,
                 coach_notes: form.coachNotes,
 
                 movement_total: results.movementTotal,
@@ -571,8 +809,31 @@ export default function FSFAssessmentWireframe() {
             </div>
           </div>
         </header>
+              <div className="flex flex-wrap gap-3">
+                  <button
+                      type="button"
+                      onClick={() => setView("form")}
+                      className={`rounded-2xl px-4 py-2 text-sm font-semibold ${view === "form"
+                              ? "bg-slate-900 text-white"
+                              : "border bg-white text-slate-800 hover:bg-slate-50"
+                          }`}
+                  >
+                      Assessment
+                  </button>
 
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                  <button
+                      type="button"
+                      onClick={() => setView("saved")}
+                      className={`rounded-2xl px-4 py-2 text-sm font-semibold ${view === "saved"
+                              ? "bg-slate-900 text-white"
+                              : "border bg-white text-slate-800 hover:bg-slate-50"
+                          }`}
+                  >
+                      Saved Assessments
+                  </button>
+              </div>
+              {view === "form" ? (
+                  <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <main className="space-y-6">
             <section className={card}>
               <div className="mb-4 flex items-center justify-between">
@@ -1085,7 +1346,43 @@ export default function FSFAssessmentWireframe() {
                       setField("topLimitingFactors", e.target.value)
                     }
                   />
-                </div>
+                                  </div>
+                                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                      <div>
+                                          <label className={label}>Recommended Training Frequency</label>
+                                          <select
+                                              className={input}
+                                              value={form.recommendedFrequency}
+                                              onChange={(e) => {
+                                                  const value = e.target.value;
+                                                  setField("recommendedFrequency", value);
+
+                                                  if (value === "2x per week") {
+                                                      setField("recommendedPrice", "$179 bi-weekly");
+                                                  } else if (value === "3x per week") {
+                                                      setField("recommendedPrice", "$268 bi-weekly");
+                                                  } else if (value === "1x per week") {
+                                                      setField("recommendedPrice", "$131 bi-weekly");
+                                                  }
+                                              }}
+                                          >
+                                              <option value="">Select frequency</option>
+                                              <option value="1x per week">1x per week</option>
+                                              <option value="2x per week">2x per week</option>
+                                              <option value="3x per week">3x per week</option>
+                                          </select>
+                                      </div>
+
+                                      <div>
+                                          <label className={label}>Recommended Price</label>
+                                          <input
+                                              className={input}
+                                              value={form.recommendedPrice}
+                                              onChange={(e) => setField("recommendedPrice", e.target.value)}
+                                              placeholder="$170 bi-weekly"
+                                          />
+                                      </div>
+                                  </div>
                 <div>
                   <label className={label}>Recommended Path</label>
                   <select
@@ -1393,7 +1690,52 @@ export default function FSFAssessmentWireframe() {
                   {results.recommendationText}
                 </p>
               </div>
+                              <div className="mt-6 rounded-xl border bg-white p-4">
+                                  <div className="text-xs uppercase tracking-wide text-slate-500">
+                                      Coach's Recommendation
+                                  </div>
 
+                                  <div className="mt-3 space-y-3 text-sm text-slate-800">
+                                      <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                          <div className="flex items-center gap-3">
+                                              <span className="inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold">
+                                                  {form.recommendedFrequency === "1x per week" ? "✓" : ""}
+                                              </span>
+                                              <span>1x per week</span>
+                                          </div>
+                                          <span>$131 bi-weekly</span>
+                                      </div>
+
+                                      <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                          <div className="flex items-center gap-3">
+                                              <span className="inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold">
+                                                  {form.recommendedFrequency === "2x per week" ? "✓" : ""}
+                                              </span>
+                                              <span>2x per week</span>
+                                          </div>
+                                          <span>$179 bi-weekly</span>
+                                      </div>
+
+                                      <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                          <div className="flex items-center gap-3">
+                                              <span className="inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold">
+                                                  {form.recommendedFrequency === "3x per week" ? "✓" : ""}
+                                              </span>
+                                              <span>3x per week</span>
+                                          </div>
+                                          <span>$268 bi-weekly</span>
+                                      </div>
+                                  </div>
+
+                                  {form.recommendedPrice && (
+                                      <div className="mt-4 text-sm text-slate-700">
+                                          <span className="font-semibold">Recommended Price:</span> {form.recommendedPrice}
+                                      </div>
+                                  )}
+                              </div>
+                              <div className="mt-3 text-xs text-slate-500">
+                                  Based on your current assessment, this is the coaching frequency most likely to help you improve safely and consistently over the next 8–12 weeks.
+                              </div>
               <div className="mt-6">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                   Progress Tracking
@@ -1448,15 +1790,98 @@ export default function FSFAssessmentWireframe() {
                   </p>
                 )}
               </div>
+                                <div className="mt-6 text-xs text-slate-500">
+                                    Freedom Strength &amp; Fitness — Helping adults build strength,
+                                    resilience, and confidence for life.
+                                </div>
+                            </section>
+                        </aside>
+                    </div>
+                ) : (
+                    <section className="rounded-3xl border bg-white p-5 shadow-sm">
+                        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                                    Saved Assessments
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    Search by client name and tap a record to reopen it.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setView("form")}
+                                className="rounded-2xl border bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                            >
+                                Back to Assessment
+                            </button>
+                        </div>
 
-              <div className="mt-6 text-xs text-slate-500">
-                Freedom Strength &amp; Fitness — Helping adults build strength,
-                resilience, and confidence for life.
-              </div>
-            </section>
-          </aside>
+                        <div className="mb-5 flex flex-col gap-3 md:flex-row">
+                            <input
+                                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Search by client name"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => loadAssessments(searchTerm)}
+                                className="rounded-2xl bg-red-700 px-5 py-3 text-sm font-semibold text-white hover:bg-red-800"
+                            >
+                                Search
+                            </button>
+                        </div>
+
+                        {isLoadingAssessments && (
+                            <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                                Loading assessments...
+                            </div>
+                        )}
+
+                        {!!assessmentLoadError && (
+                            <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+                                {assessmentLoadError}
+                            </div>
+                        )}
+
+                        {!isLoadingAssessments && !assessmentLoadError && savedAssessments.length === 0 && (
+                            <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                                No assessments found.
+                            </div>
+                        )}
+
+                        {!isLoadingAssessments && !assessmentLoadError && savedAssessments.length > 0 && (
+                            <div className="space-y-3">
+                                {savedAssessments.map((row) => (
+                                    <button
+                                        key={row.id}
+                                        type="button"
+                                        onClick={() => handleLoadAssessment(row)}
+                                        className="w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                                    >
+                                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                            <div>
+                                                <div className="text-lg font-semibold text-slate-900">
+                                                    {row.client_name || "Unnamed Client"}
+                                                </div>
+                                                <div className="text-sm text-slate-500">
+                                                    {formatListDate(row.assessment_date || row.created_at)}
+                                                    {row.coach ? ` • Coach: ${row.coach}` : ""}
+                                                </div>
+                                            </div>
+
+                                            <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-800">
+                                                Score: {row.fsf_functional_strength_score ?? "--"}
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
