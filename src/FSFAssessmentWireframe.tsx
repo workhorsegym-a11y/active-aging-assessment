@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import ClientPicker from "./ClientPicker";
 import { supabase } from "./supabase";
+import ClientPicker from "./ClientPicker";
 type Zone = "red" | "yellow" | "green" | "gray";
 
 type FormState = {
-   clientName: string;
-    email: string;
-    ghlContactId: string;
-    date: string;
+  clientName: string;
+  email: string;
+  ghlContactId: string;
+  date: string;
   coach: string;
   age: string;
   sex: string;
@@ -123,10 +123,10 @@ const pathOptions = [
 ];
 
 const initialForm: FormState = {
-    clientName: "",
-    email: "",
-    ghlContactId: "",
-    date: "",
+  clientName: "",
+  email: "",
+  ghlContactId: "",
+  date: "",
   coach: "Ron",
   age: "63",
   sex: "Female",
@@ -849,7 +849,8 @@ export default function FSFAssessmentWireframe() {
                   Start Here
                 </span>
               </div>
-              <div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div>
                   <ClientPicker
                     value={form.clientName}
                     email={form.email}
