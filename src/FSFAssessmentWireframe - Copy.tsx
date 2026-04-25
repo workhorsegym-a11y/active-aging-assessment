@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import ClientPicker from "./ClientPicker";
 import { supabase } from "./supabase";
 type Zone = "red" | "yellow" | "green" | "gray";
 
 type FormState = {
-   clientName: string;
-    email: string;
-    ghlContactId: string;
-    date: string;
+  clientName: string;
+  date: string;
   coach: string;
   age: string;
   sex: string;
@@ -123,10 +120,8 @@ const pathOptions = [
 ];
 
 const initialForm: FormState = {
-    clientName: "",
-    email: "",
-    ghlContactId: "",
-    date: "",
+  clientName: "Jane Smith",
+  date: "",
   coach: "Ron",
   age: "63",
   sex: "Female",
@@ -467,8 +462,6 @@ export default function FSFAssessmentWireframe() {
 
             const payload = {
                 client_name: form.clientName,
-                email: form.email,
-                ghl_contact_id: form.ghlContactId,
                 assessment_date: form.date,
                 coach: form.coach,
                 age: form.age ? Number(form.age) : null,
@@ -849,24 +842,13 @@ export default function FSFAssessmentWireframe() {
                   Start Here
                 </span>
               </div>
-              <div>
-                  <ClientPicker
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div>
+                  <label className={label}>Client Name</label>
+                  <input
+                    className={input}
                     value={form.clientName}
-                    email={form.email}
-                    onSelect={(c) => {
-                      if (c) {
-                        setField("clientName", c.name);
-                        setField("email", c.email);
-                        setField("ghlContactId", c.ghlContactId);
-                      } else {
-                        setField("clientName", "");
-                        setField("email", "");
-                        setField("ghlContactId", "");
-                      }
-                    }}
-                    onNameChange={(name) => setField("clientName", name)}
-                    inputClassName={input}
-                    labelClassName={label}
+                    onChange={(e) => setField("clientName", e.target.value)}
                   />
                 </div>
                 <div>
