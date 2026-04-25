@@ -81,9 +81,17 @@ export default function ClientPicker({
   }, []);
 
   const filtered = useMemo(() => {
+    // Only consider contacts that actually have a real first or last name
+    // (skip phone-only / nameless contacts that show as "(260) 481-6820")
+    const namedContacts = contacts.filter(
+      (c) => (c.firstName && c.firstName.trim().length > 0) ||
+             (c.lastName && c.lastName.trim().length > 0)
+    );
+
     const q = query.trim().toLowerCase();
-    if (!q) return contacts.slice(0, 20);
-    return contacts
+    if (!q) return namedContacts.slice(0, 20);
+
+    return namedContacts
       .filter((c) => {
         return (
           c.name.toLowerCase().includes(q) ||
