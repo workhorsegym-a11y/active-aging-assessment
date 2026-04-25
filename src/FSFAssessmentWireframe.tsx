@@ -1768,7 +1768,7 @@ export default function FSFAssessmentWireframe() {
                 <p className="text-xs text-slate-500">
                   Save assessments over time to track improvement.
                 </p>
-                <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
+                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
                   <div className="rounded-xl border p-3">
                     <div className="text-xs text-slate-500">Initial Score</div>
                     <div className="text-lg font-bold">
