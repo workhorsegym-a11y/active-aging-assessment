@@ -52,6 +52,8 @@ type AssessmentRow = {
     id: string;
     created_at: string | null;
     client_name: string | null;
+    email: string | null;
+    ghl_contact_id: string | null;
     assessment_date: string | null;
     coach: string | null;
     age: number | null;
@@ -364,6 +366,8 @@ export default function FSFAssessmentWireframe() {
     const mapRowToForm = (row: AssessmentRow): FormState => {
         return {
             clientName: row.client_name ?? "",
+            email: row.email ?? "",
+            ghlContactId: row.ghl_contact_id ?? "",
             date: row.assessment_date ?? "",
             coach: row.coach ?? "",
             age: row.age !== null && row.age !== undefined ? String(row.age) : "",
