@@ -297,6 +297,8 @@ export default function FSFAssessmentWireframe() {
         id,
         created_at,
         client_name,
+        email,
+        ghl_contact_id,
         assessment_date,
         coach,
         age,
