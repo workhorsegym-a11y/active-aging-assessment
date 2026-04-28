@@ -22,6 +22,7 @@ type ClientPickerProps = {
   email: string;
   onSelect: (contact: { name: string; email: string; ghlContactId: string } | null) => void;
   onNameChange: (name: string) => void;
+  onEmailChange?: (email: string) => void;
   inputClassName?: string;
   labelClassName?: string;
 };
@@ -35,6 +36,7 @@ export default function ClientPicker({
   email,
   onSelect,
   onNameChange,
+  onEmailChange,
   inputClassName = "",
   labelClassName = "",
 }: ClientPickerProps) {
@@ -236,6 +238,25 @@ export default function ClientPicker({
         <div className="mt-1 flex items-center gap-1 text-xs text-emerald-700">
           <span>✓ Linked to GHL:</span>
           <span className="font-medium">{email}</span>
+        </div>
+      )}
+
+      {/* Walk-in mode: when no GHL contact selected and user has typed a name,
+          show an email field so the assessment can still be saved with a real email */}
+      {!selectedId && query.trim().length > 0 && !open && (
+        <div className="mt-2">
+          <label className={labelClassName}>Email (walk-in)</label>
+          <input
+            type="email"
+            className={inputClassName}
+            value={email}
+            onChange={(e) => onEmailChange && onEmailChange(e.target.value)}
+            placeholder="walk-in client email"
+            autoComplete="off"
+          />
+          <div className="mt-1 text-[11px] text-amber-700">
+            ⚠ Walk-in: not linked to GHL. Email is required to save.
+          </div>
         </div>
       )}
 

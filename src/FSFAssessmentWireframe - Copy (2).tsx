@@ -471,56 +471,11 @@ export default function FSFAssessmentWireframe() {
             setIsSaving(true);
             setSaveStatus("");
 
-            // ─── INPUT VALIDATION & CLEANUP ──────────────────────────────────
-            // Auto-trim: collapse multiple spaces, strip leading/trailing whitespace
-            const cleanName = (form.clientName || "").replace(/\s+/g, " ").trim();
-            const cleanEmail = (form.email || "").trim().toLowerCase();
-
-            // Require client name
-            if (!cleanName) {
-                setSaveStatus("Please enter a client name.");
-                setIsSaving(false);
-                return;
-            }
-
-            // Require email (unless explicit walk-in mode — for now, require for all)
-            if (!cleanEmail) {
-                setSaveStatus("Email is required. Please pick a client from the dropdown or enter their email manually.");
-                setIsSaving(false);
-                return;
-            }
-
-            // Basic email format check
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(cleanEmail)) {
-                setSaveStatus("Please enter a valid email address (e.g., name@example.com).");
-                setIsSaving(false);
-                return;
-            }
-
-            // Validate date — accept MM/DD/YYYY format
-            const dateRegex = /^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/\d{4}$/;
-            if (!form.date || !dateRegex.test(form.date.trim())) {
-                setSaveStatus("Please enter a valid date in MM/DD/YYYY format (e.g., 04/27/2026).");
-                setIsSaving(false);
-                return;
-            }
-            // Sanity check: year should be reasonable (not "206" instead of "2026")
-            const yearMatch = form.date.match(/\/(\d{4})$/);
-            if (yearMatch) {
-                const yr = parseInt(yearMatch[1], 10);
-                if (yr < 2020 || yr > 2050) {
-                    setSaveStatus(`Date year "${yr}" looks wrong. Please double-check the date.`);
-                    setIsSaving(false);
-                    return;
-                }
-            }
-
             const payload = {
-                client_name: cleanName,
-                email: cleanEmail,
-                ghl_contact_id: (form.ghlContactId || "").trim(),
-                assessment_date: form.date.trim(),
+                client_name: form.clientName,
+                email: form.email,
+                ghl_contact_id: form.ghlContactId,
+                assessment_date: form.date,
                 coach: form.coach,
                 age: form.age ? Number(form.age) : null,
                 sex: form.sex,
@@ -917,7 +872,6 @@ export default function FSFAssessmentWireframe() {
                       }
                     }}
                     onNameChange={(name) => setField("clientName", name)}
-                    onEmailChange={(em) => setField("email", em)}
                     inputClassName={input}
                     labelClassName={label}
                   />
@@ -925,30 +879,10 @@ export default function FSFAssessmentWireframe() {
                 <div>
                   <label className={label}>Date</label>
                   <input
-                    type="date"
                     className={input}
-                    value={(() => {
-                      // Convert MM/DD/YYYY -> YYYY-MM-DD for the date input
-                      const m = (form.date || "").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-                      if (m) {
-                        const mm = m[1].padStart(2, "0");
-                        const dd = m[2].padStart(2, "0");
-                        return `${m[3]}-${mm}-${dd}`;
-                      }
-                      // Already in YYYY-MM-DD format? pass through
-                      if (/^\d{4}-\d{2}-\d{2}$/.test(form.date || "")) return form.date;
-                      return "";
-                    })()}
-                    onChange={(e) => {
-                      // Convert YYYY-MM-DD -> MM/DD/YYYY for downstream consistency
-                      const v = e.target.value;
-                      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-                        const [yyyy, mm, dd] = v.split("-");
-                        setField("date", `${mm}/${dd}/${yyyy}`);
-                      } else {
-                        setField("date", v);
-                      }
-                    }}
+                    value={form.date}
+                    onChange={(e) => setField("date", e.target.value)}
+                    placeholder="MM/DD/YYYY"
                   />
                 </div>
                 <div>
