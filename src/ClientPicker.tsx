@@ -13,6 +13,7 @@ type BookedLead = {
   name: string;
   phone: string;
   email: string;
+  contactId: string;
   stage: string;
   daysInStage: number;
 };
@@ -118,6 +119,7 @@ export default function ClientPicker({
     name: string;
     email: string;
     phone: string;
+    contactId: string;
     stage?: string;
     daysInStage?: number;
     isBooked: boolean;
@@ -134,6 +136,7 @@ export default function ClientPicker({
       name: b.name,
       email: b.email || "",
       phone: b.phone || "",
+      contactId: b.contactId || "",
       stage: b.stage,
       daysInStage: b.daysInStage,
       isBooked: true,
@@ -172,6 +175,7 @@ export default function ClientPicker({
         name: c.name,
         email: c.email || "",
         phone: c.phone || "",
+        contactId: c.id,
         isBooked: false,
       }));
 
@@ -185,7 +189,7 @@ export default function ClientPicker({
     onSelect({
       name: item.name,
       email: item.email,
-      ghlContactId: item.isBooked ? "" : item.id,
+      ghlContactId: item.contactId || "",
     });
   }
 
