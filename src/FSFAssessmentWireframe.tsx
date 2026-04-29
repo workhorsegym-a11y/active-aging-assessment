@@ -236,18 +236,41 @@ function ZoneMeter({
   labels: string[];
 }) {
   const pos = markerPosition(value, min, max);
+  // Inline styles with print-color-adjust force browsers to print these background
+  // colors instead of stripping them (default behavior to save ink).
+  const printColorStyle = {
+    WebkitPrintColorAdjust: 'exact' as const,
+    printColorAdjust: 'exact' as const,
+    colorAdjust: 'exact' as const,
+  };
   return (
     <div className="mt-2">
-      <div className="relative h-3 w-full overflow-hidden rounded-full border bg-slate-100">
-        <div className="grid h-full grid-cols-3">
-          <div className="bg-red-500/70" />
-          <div className="bg-yellow-400/80" />
-          <div className="bg-green-500/70" />
+      <div
+        className="relative h-3 w-full overflow-hidden rounded-full border bg-slate-100"
+        style={printColorStyle}
+      >
+        <div className="grid h-full grid-cols-3" style={printColorStyle}>
+          <div
+            className="bg-red-500/70"
+            style={{ ...printColorStyle, backgroundColor: 'rgba(239, 68, 68, 0.7)' }}
+          />
+          <div
+            className="bg-yellow-400/80"
+            style={{ ...printColorStyle, backgroundColor: 'rgba(250, 204, 21, 0.8)' }}
+          />
+          <div
+            className="bg-green-500/70"
+            style={{ ...printColorStyle, backgroundColor: 'rgba(34, 197, 94, 0.7)' }}
+          />
         </div>
         {value !== null && value !== undefined && !Number.isNaN(value) && (
           <div
             className="absolute top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-slate-900 shadow"
-            style={{ left: `calc(${pos}% - 2px)` }}
+            style={{
+              ...printColorStyle,
+              backgroundColor: '#0f172a',
+              left: `calc(${pos}% - 2px)`,
+            }}
           />
         )}
       </div>
