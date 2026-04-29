@@ -1749,6 +1749,32 @@ export default function FSFAssessmentWireframe() {
                 </div>
               </div>
 
+              <div className="mt-4 rounded-xl border bg-slate-50 p-4 break-inside-avoid print:break-inside-avoid">
+                <div className="text-xs uppercase tracking-wide text-slate-500">
+                  Functional Strength Age
+                </div>
+                {results.functionalAge !== null ? (
+                  <div className="mt-2">
+                    <div className="text-sm">
+                      Chronological Age:{" "}
+                      <span className="font-semibold">{form.age}</span>
+                    </div>
+                    <div className="text-lg font-bold">
+                      Functional Strength Age: {results.functionalAge}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">
+                      This estimate reflects how your strength, balance, and
+                      mobility compare to typical aging benchmarks. Improving
+                      strength can lower this number.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    Complete the assessment to calculate functional age.
+                  </p>
+                )}
+              </div>
+
               <div className="mt-6">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                   Key Functional Metrics
@@ -1757,7 +1783,7 @@ export default function FSFAssessmentWireframe() {
                   {previewMetrics.map((metric) => (
                     <div
                       key={`print-${metric.title}`}
-                      className="rounded-xl border p-3"
+                      className="rounded-xl border p-3 break-inside-avoid print:break-inside-avoid"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-semibold">{metric.title}</div>
@@ -1856,32 +1882,7 @@ export default function FSFAssessmentWireframe() {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-xl border bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">
-                  Functional Strength Age
-                </div>
-                {results.functionalAge !== null ? (
-                  <div className="mt-2">
-                    <div className="text-sm">
-                      Chronological Age:{" "}
-                      <span className="font-semibold">{form.age}</span>
-                    </div>
-                    <div className="text-lg font-bold">
-                      Functional Strength Age: {results.functionalAge}
-                    </div>
-                    <p className="mt-1 text-xs text-slate-600">
-                      This estimate reflects how your strength, balance, and
-                      mobility compare to typical aging benchmarks. Improving
-                      strength can lower this number.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500">
-                    Complete the assessment to calculate functional age.
-                  </p>
-                )}
-              </div>
-                                <div className="mt-6 text-xs text-slate-500">
+              <div className="mt-6 text-xs text-slate-500">
                                     Freedom Strength &amp; Fitness — Helping adults build strength,
                                     resilience, and confidence for life.
                                 </div>
