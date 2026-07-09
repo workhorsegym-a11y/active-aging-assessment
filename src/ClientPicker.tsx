@@ -28,9 +28,13 @@ type ClientPickerProps = {
   labelClassName?: string;
 };
 
-const DASHBOARD_BASE = "https://fsf-dashboard.vercel.app";
-const CONTACTS_API = `${DASHBOARD_BASE}/api/contacts`;
-const LEADS_API = `${DASHBOARD_BASE}/api/leads`;
+// Call our OWN backend (same-origin) proxies at api/leads.js and api/contacts.js.
+// They inject the dashboard's CRON_SECRET server-side so the shared secret is
+// never shipped to the browser. The dashboard's /api/leads + /api/contacts are
+// gated by Basic Auth (added 2026-07-04); an unauthenticated browser fetch to
+// them returns 401, which is what silently emptied the scheduled-assessments list.
+const CONTACTS_API = `/api/contacts`;
+const LEADS_API = `/api/leads`;
 
 export default function ClientPicker({
   value,
