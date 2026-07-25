@@ -306,6 +306,11 @@ export default function FSFAssessmentWireframe() {
   const [savedAssessments, setSavedAssessments] = useState<AssessmentRow[]>([]);
   const [isLoadingAssessments, setIsLoadingAssessments] = useState(false);
   const [assessmentLoadError, setAssessmentLoadError] = useState("");
+  // Provenance of auto-filled Primary Goal / Limitation. null once the coach edits.
+  const [goalSource, setGoalSource] = useState<string | null>(null);
+  const [complaintSource, setComplaintSource] = useState<string | null>(null);
+  const sourceLabel = (s: string | null) =>
+    s === "intake" ? "from intake form" : s === "conversation" ? "from conversation" : null;
   const setField = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -937,6 +942,25 @@ export default function FSFAssessmentWireframe() {
                         setField("clientName", "");
                         setField("email", "");
                         setField("ghlContactId", "");
+                        setGoalSource(null);
+                        setComplaintSource(null);
+                      }
+                    }}
+                    onIntake={(intake) => {
+                      if (!intake) {
+                        setGoalSource(null);
+                        setComplaintSource(null);
+                        return;
+                      }
+                      // Prefill + editable: fill each field the intake resolved,
+                      // and tag its provenance for the "from ..." marker.
+                      if (intake.goal) {
+                        setField("goal", intake.goal);
+                        setGoalSource(intake.sourceGoal);
+                      }
+                      if (intake.complaint) {
+                        setField("complaint", intake.complaint);
+                        setComplaintSource(intake.sourceComplaint);
                       }
                     }}
                     onNameChange={(name) => setField("clientName", name)}
@@ -1005,19 +1029,39 @@ export default function FSFAssessmentWireframe() {
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className={label}>Primary Goal</label>
+                  <label className={label}>
+                    Primary Goal
+                    {sourceLabel(goalSource) && (
+                      <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium align-middle text-sky-700">
+                        {sourceLabel(goalSource)}
+                      </span>
+                    )}
+                  </label>
                   <input
                     className={input}
                     value={form.goal}
-                    onChange={(e) => setField("goal", e.target.value)}
+                    onChange={(e) => {
+                      setField("goal", e.target.value);
+                      setGoalSource(null);
+                    }}
                   />
                 </div>
                 <div>
-                  <label className={label}>Primary Limitation / Complaint</label>
+                  <label className={label}>
+                    Primary Limitation / Complaint
+                    {sourceLabel(complaintSource) && (
+                      <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium align-middle text-sky-700">
+                        {sourceLabel(complaintSource)}
+                      </span>
+                    )}
+                  </label>
                   <input
                     className={input}
                     value={form.complaint}
-                    onChange={(e) => setField("complaint", e.target.value)}
+                    onChange={(e) => {
+                      setField("complaint", e.target.value);
+                      setComplaintSource(null);
+                    }}
                   />
                 </div>
               </div>

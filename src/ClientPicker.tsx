@@ -24,6 +24,16 @@ type ClientPickerProps = {
   onSelect: (contact: { name: string; email: string; ghlContactId: string } | null) => void;
   onNameChange: (name: string) => void;
   onEmailChange?: (email: string) => void;
+  // Fires after a GHL contact is picked, with intake goal/limitation pulled from
+  // custom fields or extracted from the conversation (best-effort prefill).
+  onIntake?: (
+    intake: {
+      goal: string;
+      complaint: string;
+      sourceGoal: string | null;
+      sourceComplaint: string | null;
+    } | null,
+  ) => void;
   inputClassName?: string;
   labelClassName?: string;
 };
@@ -35,6 +45,7 @@ type ClientPickerProps = {
 // them returns 401, which is what silently emptied the scheduled-assessments list.
 const CONTACTS_API = `/api/contacts`;
 const LEADS_API = `/api/leads`;
+const INTAKE_API = `/api/contact-intake`;
 
 export default function ClientPicker({
   value,
@@ -42,6 +53,7 @@ export default function ClientPicker({
   onSelect,
   onNameChange,
   onEmailChange,
+  onIntake,
   inputClassName = "",
   labelClassName = "",
 }: ClientPickerProps) {
@@ -195,6 +207,25 @@ export default function ClientPicker({
       email: item.email,
       ghlContactId: item.contactId || "",
     });
+    if (onIntake && item.contactId) void fetchIntake(item.contactId);
+  }
+
+  // Best-effort: pull goal/limitation for the picked contact so the form can
+  // prefill them. Silent on any failure — the coach can still type manually.
+  async function fetchIntake(contactId: string) {
+    try {
+      const res = await fetch(`${INTAKE_API}?id=${encodeURIComponent(contactId)}`);
+      if (!res.ok) return;
+      const d = await res.json();
+      onIntake?.({
+        goal: typeof d.goal === "string" ? d.goal : "",
+        complaint: typeof d.complaint === "string" ? d.complaint : "",
+        sourceGoal: d.source?.goal ?? null,
+        sourceComplaint: d.source?.complaint ?? null,
+      });
+    } catch {
+      /* prefill is best-effort; ignore network/parse errors */
+    }
   }
 
   function handleInputChange(v: string) {
@@ -211,6 +242,7 @@ export default function ClientPicker({
     setQuery("");
     setSelectedId(null);
     onSelect(null);
+    onIntake?.(null);
     onNameChange("");
   }
 
